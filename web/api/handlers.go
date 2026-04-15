@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 	"xyzw_study/internal/crypto/bon"
 	"xyzw_study/internal/model"
@@ -178,4 +179,57 @@ func HandleGamePacket(packet proxy.GamePacket) {
 		Call: call,
 		Msg:  packet.RawData,
 	})
+}
+
+// SaveAuthData 将 AuthData hex 字符串持久化到文件（供 capture 回调使用）
+func SaveAuthData(data string) {
+	proxy.AuthData = data
+	if err := os.WriteFile(authDataFilePath, []byte(data), 0644); err != nil {
+		log.Println("保存 AuthData 失败:", err)
+	}
+}
+
+// LoadAuthDataFromFile 从文件恢复 AuthData（启动时调用）
+func LoadAuthDataFromFile() {
+	data, err := os.ReadFile(authDataFilePath)
+	if err != nil {
+		return
+	}
+	val := strings.TrimSpace(string(data))
+	if val != "" {
+		proxy.AuthData = val
+		log.Println("已从文件恢复 AuthData，长度:", len(val))
+	}
+}
+
+// HandleGetAuthData GET /api/auth/data — 返回当前 AuthData 状态
+func HandleGetAuthData(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	hasData := proxy.AuthData != ""
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"hasData": hasData,
+		"length":  len(proxy.AuthData),
+	})
+}
+
+// HandleSetAuthData POST /api/auth/data — 外部注入 AuthData
+func HandleSetAuthData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "只支持POST请求", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		AuthData string `json:"authData"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "解析请求失败: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	if req.AuthData == "" {
+		http.Error(w, "authData 不能为空", http.StatusBadRequest)
+		return
+	}
+	SaveAuthData(req.AuthData)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"success": true}`))
 }
