@@ -19,8 +19,33 @@ func StartWebServer() {
 	if err := api.InitStorage(); err != nil {
 		log.Fatal("初始化存储失败:", err)
 	}
+	api.LoadAuthDataFromFile()
+	// MITM CA 证书下载
+	http.HandleFunc("/cert", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/x-x509-ca-cert")
+		w.Header().Set("Content-Disposition", "attachment; filename=xyzw-ca.crt")
+		http.ServeFile(w, r, "/app/ca/ca.crt")
+	})
+	// VPN CA 证书下载
+	http.HandleFunc("/vpncert", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/x-x509-ca-cert")
+		w.Header().Set("Content-Disposition", "attachment; filename=vpn-ca.crt")
+		http.ServeFile(w, r, "/app/vpn-ca/vpn-ca-cert.pem")
+	})
+
 	// 设置 WebSocket 路由
 	http.HandleFunc("/ws", api.HandleWebSocket)
+
+	// AuthData 查询与注入
+	http.HandleFunc("/api/auth/data", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			api.HandleGetAuthData(w, r)
+		} else if r.Method == http.MethodPost {
+			api.HandleSetAuthData(w, r)
+		} else {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// 设置备注API路由
 	http.HandleFunc("/api/notes/save", api.HandleSaveNotes)
@@ -48,7 +73,7 @@ func StartWebServer() {
 	go api.ConsumeDebugQueue()
 
 	// 开始捕获游戏数据包
-	go proxy.StartCapture(api.HandleGamePacket)
+	go proxy.StartCapture(api.HandleGamePacket, api.SaveAuthData)
 
 	// 启动 HTTP 服务器
 	port := 12582
