@@ -43,7 +43,7 @@ type GamePacket struct {
 type PacketHandler func(packet GamePacket)
 
 // StartCapture 开始捕获游戏数据包
-func StartCapture(handler PacketHandler) {
+func StartCapture(handler PacketHandler, onAuthData func(string)) {
 	proxy := gamemitm.NewProxy()
 	proxy.SetVerbose(false)
 	seq = 0
@@ -59,6 +59,9 @@ func StartCapture(handler PacketHandler) {
 				return bs
 			}
 			AuthData = hex.EncodeToString(body)
+			if onAuthData != nil {
+				onAuthData(AuthData)
+			}
 			return body
 		}
 
