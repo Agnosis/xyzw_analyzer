@@ -13,6 +13,8 @@ var (
 	scriptsFilePath = filepath.Join(dataDir, "scripts.json")
 	// 备注数据文件路径
 	notesFilePath = filepath.Join(dataDir, "notes.json")
+	// AuthData 持久化文件路径
+	authDataFilePath = filepath.Join(dataDir, "auth_data.txt")
 )
 
 // 初始化存储
