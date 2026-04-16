@@ -1,0 +1,13 @@
+# 部署配置示例
+# cp deploy.conf.example deploy.conf 后填写真实值
+
+# ---- 服务器 SSH ----
+REMOTE_USER="root"
+REMOTE_HOST="your-server-ip"
+REMOTE_PORT="22"
+
+# ---- 阿里云 ACR ----
+ACR_REGISTRY="your-acr-registry.aliyuncs.com"
+ACR_REGISTRY_VPC="your-acr-registry-vpc.aliyuncs.com"
+ACR_NAMESPACE="your-namespace"
+ACR_USERNAME="your-username"

@@ -1,0 +1,23 @@
+services:
+  analyzer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: xyzw-analyzer:latest
+    container_name: xyzw-analyzer
+    restart: unless-stopped
+    ports:
+      - "12311:12311"   # MITM 代理端口（手机配置 WiFi 代理到此端口）
+      - "12582:12582"   # Web 分析界面
+    volumes:
+      - ../data:/app/data   # 持久化脚本和备注
+      - xyzw-ca:/app/ca                        # 持久化 MITM CA 证书
+      - /etc/ipsec.d/cacerts:/app/vpn-ca:ro    # VPN CA 证书（只读）
+    environment:
+      SERVER_MODE: "1"
+    dns:
+      - 223.5.5.5
+      - 223.6.6.6
+
+volumes:
+  xyzw-ca:

@@ -16,8 +16,6 @@ import (
 	"xyzw_study/web"
 
 	"github.com/fatih/color"
-
-	"github.com/husanpao/game-mitm/gosysproxy"
 )
 
 // 当前应用版本
@@ -143,34 +141,42 @@ func main() {
 	// 显示免责声明
 	showDisclaimer()
 
-	// 检查更新，如果有新版本则退出程序
-	if checkForUpdates() {
-		fmt.Println()
-		waitForExit()
-		return
-	}
+	// 服务器模式：设置 SERVER_MODE=1 跳过系统代理设置（适用于 Docker/服务器部署）
+	serverMode := os.Getenv("SERVER_MODE") == "1"
 
-	// 设置代理
-	err := gosysproxy.SetGlobalProxy("127.0.0.1:12311", "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*")
-	if err != nil {
-		color.Red("设置系统代理失败: %v", err)
-		panic(err)
-	}
-	color.Green("系统代理设置成功")
+	if serverMode {
+		color.Cyan("服务器模式已启用（SERVER_MODE=1）")
+		color.Yellow("请在手机 WiFi 设置中手动配置代理：服务器IP:12311")
+	} else {
+		// 检查更新，如果有新版本则退出程序
+		if checkForUpdates() {
+			fmt.Println()
+			waitForExit()
+			return
+		}
 
-	// 确保在函数返回时关闭代理
-	defer func() {
-		color.Yellow("正在关闭系统代理...")
-		gosysproxy.Off()
-		color.Green("系统代理已关闭")
-	}()
+		// 设置代理
+		err := setGlobalProxy("127.0.0.1:12311", "localhost;127.*;10.*;172.16.*;172.17.*;172.18.*;172.19.*;172.20.*;172.21.*;172.22.*;172.23.*;172.24.*;172.25.*;172.26.*;172.27.*;172.28.*;172.29.*;172.30.*;172.31.*;192.168.*")
+		if err != nil {
+			color.Red("设置系统代理失败: %v", err)
+			panic(err)
+		}
+		color.Green("系统代理设置成功")
+
+		// 确保在函数返回时关闭代理
+		defer func() {
+			color.Yellow("正在关闭系统代理...")
+			proxyOff()
+			color.Green("系统代理已关闭")
+		}()
+	}
 
 	// 设置信号处理，捕获中断信号
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	go web.StartWebServer()
-	color.Green("Web服务器已启动")
+	color.Green("Web服务器已启动，访问 http://localhost:12582")
 
 	// 等待中断信号
 	<-c

@@ -24,4 +24,4 @@ go.work
 *.swo
 
 # Project specific
-ca/
+ca/\n# 部署配置（含隐私信息，不提交）\ndeploy/deploy.conf\ndeploy/database/\ndocs/superpowers/

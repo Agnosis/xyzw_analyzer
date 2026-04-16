@@ -7,6 +7,8 @@ require (
 	github.com/pierrec/lz4 v2.6.1+incompatible
 )
 
+replace github.com/husanpao/game-mitm => ./third_party/game-mitm
+
 require (
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/frankban/quicktest v1.14.6 // indirect
