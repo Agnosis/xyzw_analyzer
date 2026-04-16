@@ -53,14 +53,18 @@ func StartCapture(handler PacketHandler, onAuthData func(string)) {
 			return body
 		}
 		if ctx.Req.URL.Path == "/login/authuser" {
-			if Redirect && AuthData != "" {
-				bs, _ := hex.DecodeString(AuthData)
-				Redirect = false
-				return bs
-			}
-			AuthData = hex.EncodeToString(body)
-			if onAuthData != nil {
-				onAuthData(AuthData)
+			if ctx.Req.Method == "POST" {
+				if Redirect && AuthData != "" {
+					bs, _ := hex.DecodeString(AuthData)
+					Redirect = false
+					return bs
+				}
+				if len(body) > 0 {
+					AuthData = hex.EncodeToString(body)
+					if onAuthData != nil {
+						onAuthData(AuthData)
+					}
+				}
 			}
 			return body
 		}
