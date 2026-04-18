@@ -166,7 +166,7 @@ const App = {
     methods: {
         // 连接WebSocket
         connectWebSocket() {
-            const wsUrl = `ws://${window.location.hostname}:12582/ws`;
+            const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${location.port || 12582}/ws`;
 
             // 如果已有连接，先关闭
             if (this.websocket && this.websocket.readyState !== WebSocket.CLOSED) {
